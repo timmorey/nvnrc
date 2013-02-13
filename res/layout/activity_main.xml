@@ -1,0 +1,204 @@
+<TableLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:stretchColumns="*"
+    tools:context=".MainActivity" >
+
+    <TableRow>
+        
+	    <TextView
+	        android:padding="5dp"
+	        android:text="Sensor" />
+	
+	    <TextView
+    	    android:gravity="right"
+	        android:padding="5dp"
+	        android:text="Current" />
+	
+	    <TextView
+    	    android:gravity="right"
+	        android:padding="5dp"
+	        android:text="Min" />
+	
+	    <TextView
+    	    android:gravity="right"
+	        android:padding="5dp"
+	        android:text="Max" />
+	
+	    <TextView
+    	    android:gravity="right"
+	        android:padding="5dp"
+	        android:text="Smoothed" />
+	    
+    </TableRow>
+    
+    <TableRow>
+
+    	<TextView
+    	    android:padding="5dp"
+    	    android:text="AX" />
+    	
+    	<TextView
+    	    android:id="@+id/AXCurTextView"
+    	    android:gravity="right"
+    	    android:padding="5dp" />
+    	
+    	<TextView 
+    	    android:id="@+id/AXMinTextView"
+    	    android:gravity="right"
+    	    android:padding="5dp"/>
+    	
+    	<TextView 
+    	    android:id="@+id/AXMaxTextView"
+    	    android:gravity="right"
+    	    android:padding="5dp"/>
+    	
+    	<TextView 
+    	    android:id="@+id/AXSmoothedTextView"
+    	    android:gravity="right"
+    	    android:padding="5dp"/>
+    
+    </TableRow>
+    
+    <TableRow>
+
+    	<TextView
+    	    android:padding="5dp"
+    	    android:text="AY" />
+    	
+    	<TextView 
+    	    android:id="@+id/AYCurTextView"
+    	    android:gravity="right"
+    	    android:padding="5dp"/>
+    	
+    	<TextView 
+    	    android:id="@+id/AYMinTextView"
+    	    android:gravity="right"
+    	    android:padding="5dp"/>
+    	
+    	<TextView 
+    	    android:id="@+id/AYMaxTextView"
+    	    android:gravity="right"
+    	    android:padding="5dp"/>
+    	
+    	<TextView 
+    	    android:id="@+id/AYSmoothedTextView"
+    	    android:gravity="right"
+    	    android:padding="5dp"/>
+    
+    </TableRow>
+    
+    <TableRow>
+
+    	<TextView
+    	    android:padding="5dp"
+    	    android:text="AZ" />
+    	
+    	<TextView 
+    	    android:id="@+id/AZCurTextView"
+    	    android:gravity="right"
+    	    android:padding="5dp"/>
+    	
+    	<TextView 
+    	    android:id="@+id/AZMinTextView"
+    	    android:gravity="right"
+    	    android:padding="5dp"/>
+    	
+    	<TextView 
+    	    android:id="@+id/AZMaxTextView"
+    	    android:gravity="right"
+    	    android:padding="5dp"/>
+    	
+    	<TextView 
+    	    android:id="@+id/AZSmoothedTextView"
+    	    android:gravity="right"
+    	    android:padding="5dp"/>
+    
+    </TableRow>
+    
+    <TableRow>
+
+    	<TextView
+    	    android:padding="5dp"
+    	    android:text="RX" />
+    	
+    	<TextView 
+    	    android:id="@+id/RXCurTextView"
+    	    android:gravity="right"
+    	    android:padding="5dp"/>
+    	
+    	<TextView 
+    	    android:id="@+id/RXMinTextView"
+    	    android:gravity="right"
+    	    android:padding="5dp"/>
+    	
+    	<TextView 
+    	    android:id="@+id/RXMaxTextView"
+    	    android:gravity="right"
+    	    android:padding="5dp"/>
+    	
+    	<TextView 
+    	    android:id="@+id/RXSmoothedTextView"
+    	    android:gravity="right"
+    	    android:padding="5dp"/>
+    
+    </TableRow>
+    
+    <TableRow>
+
+    	<TextView
+    	    android:padding="5dp"
+    	    android:text="RY" />
+    	
+    	<TextView 
+    	    android:id="@+id/RYCurTextView"
+    	    android:gravity="right"
+    	    android:padding="5dp"/>
+    	
+    	<TextView 
+    	    android:id="@+id/RYMinTextView"
+    	    android:gravity="right"
+    	    android:padding="5dp"/>
+    	
+    	<TextView 
+    	    android:id="@+id/RYMaxTextView"
+    	    android:gravity="right"
+    	    android:padding="5dp"/>
+    	
+    	<TextView 
+    	    android:id="@+id/RYSmoothedTextView"
+    	    android:gravity="right"
+    	    android:padding="5dp"/>
+    
+    </TableRow>
+    
+    <TableRow>
+
+    	<TextView
+    	    android:padding="5dp"
+    	    android:text="RZ" />
+    	
+    	<TextView 
+    	    android:id="@+id/RZCurTextView"
+    	    android:gravity="right"
+    	    android:padding="5dp"/>
+    	
+    	<TextView 
+    	    android:id="@+id/RZMinTextView"
+    	    android:gravity="right"
+    	    android:padding="5dp"/>
+    	
+    	<TextView 
+    	    android:id="@+id/RZMaxTextView"
+    	    android:gravity="right"
+    	    android:padding="5dp"/>
+    	
+    	<TextView 
+    	    android:id="@+id/RZSmoothedTextView"
+    	    android:gravity="right"
+    	    android:padding="5dp"/>
+    
+    </TableRow>
+    
+</TableLayout>
