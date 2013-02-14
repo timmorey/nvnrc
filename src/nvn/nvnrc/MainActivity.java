@@ -4,10 +4,15 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.app.Activity;
 import android.view.Menu;
 import android.widget.TextView;
+import java.net.Socket;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 
 public class MainActivity 
 	extends Activity
@@ -47,16 +52,14 @@ public class MainActivity
     private TextView m_RZMaxTV;
     private TextView m_RZSmoothedTV;
     
-    private int m_SampleSize = 100;
-    private int m_SmoothingSize = 7;
-    private int m_CurA = 0;
-    private int m_CurR = 0;
-    private float[] m_AX = new float[m_SampleSize];
-    private float[] m_AY = new float[m_SampleSize];
-    private float[] m_AZ = new float[m_SampleSize];
-    private float[] m_RX = new float[m_SampleSize];
-    private float[] m_RY = new float[m_SampleSize];
-    private float[] m_RZ = new float[m_SampleSize];
+    private float m_AX, m_AY, m_AZ;
+    private float m_MinAX, m_MinAY, m_MinAZ;
+    private float m_MaxAX, m_MaxAY, m_MaxAZ;
+    private float m_RX, m_RY, m_RZ;
+    private float m_MinRX, m_MinRY, m_MinRZ;
+    private float m_MaxRX, m_MaxRY, m_MaxRZ;
+    
+    private SendTask m_SendTask = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -97,6 +100,11 @@ public class MainActivity
         m_RZMinTV = (TextView)findViewById(R.id.RZMinTextView);
         m_RZMaxTV = (TextView)findViewById(R.id.RZMaxTextView);
         m_RZSmoothedTV = (TextView)findViewById(R.id.RZSmoothedTextView);
+        
+        m_MinAX = m_MinAY = m_MinAZ = Float.MAX_VALUE;
+        m_MaxAX = m_MaxAY = m_MaxAZ = Float.MIN_VALUE;
+        m_MinRX = m_MinRY = m_MinRZ = Float.MAX_VALUE;
+        m_MaxRX = m_MaxRY = m_MaxRZ = Float.MIN_VALUE;
     }
 
     @Override
@@ -111,6 +119,12 @@ public class MainActivity
         super.onPause();
 
         m_SensorManager.unregisterListener(this);
+        
+        if(m_SendTask != null)
+        {
+        	m_SendTask.cancel(false);
+        	m_SendTask = null;
+        }
     }
 
     @Override
@@ -119,22 +133,61 @@ public class MainActivity
 
         m_SensorManager.registerListener(this, m_Accelerometer, SensorManager.SENSOR_DELAY_UI);
         m_SensorManager.registerListener(this, m_Gyroscope, SensorManager.SENSOR_DELAY_UI);
+        
+        m_SendTask = new SendTask();
+        m_SendTask.execute(new Object[1]);
     }
     
     @Override
     public void onSensorChanged(SensorEvent event) {
     	
     	if(Sensor.TYPE_LINEAR_ACCELERATION == event.sensor.getType()) {
-    		m_AX[m_CurA] = event.values[0];
-    		m_AY[m_CurA] = event.values[1];
-    		m_AZ[m_CurA] = event.values[2];
-    		updateA();
+    		m_AX = event.values[0];
+    		m_AY = event.values[1];
+    		m_AZ = event.values[2];
+
+    		if(m_AX < m_MinAX) m_MinAX = m_AX;
+    		if(m_AY < m_MinAY) m_MinAY = m_AY;
+    		if(m_AZ < m_MinAZ) m_MinAZ = m_AZ;
+    		if(m_AX > m_MaxAX) m_MaxAX = m_AX;
+    		if(m_AY > m_MaxAY) m_MaxAY = m_AY;
+    		if(m_AZ > m_MaxAZ) m_MaxAZ = m_AZ;
+        	
+        	m_AXCurTV.setText(String.format("%.2f", m_AX));
+        	m_AXMinTV.setText(String.format("%.2f", m_MinAX));
+        	m_AXMaxTV.setText(String.format("%.2f", m_MaxAX));
+        	
+        	m_AYCurTV.setText(String.format("%.2f", m_AY));
+        	m_AYMinTV.setText(String.format("%.2f", m_MinAY));
+        	m_AYMaxTV.setText(String.format("%.2f", m_MaxAY));
+        	
+        	m_AZCurTV.setText(String.format("%.2f", m_AZ));
+        	m_AZMinTV.setText(String.format("%.2f", m_MinAZ));
+        	m_AZMaxTV.setText(String.format("%.2f", m_MaxAZ));
 	        
     	} else if(Sensor.TYPE_GYROSCOPE == event.sensor.getType()) {
-    		m_RX[m_CurR] = event.values[0];
-    		m_RY[m_CurR] = event.values[1];
-    		m_RZ[m_CurR] = event.values[2];
-    		updateR();
+    		m_RX = event.values[0];
+    		m_RY = event.values[1];
+    		m_RZ = event.values[2];
+
+    		if(m_RX < m_MinRX) m_MinRX = m_RX;
+    		if(m_RY < m_MinRY) m_MinRY = m_RY;
+    		if(m_RZ < m_MinRZ) m_MinRZ = m_RZ;
+    		if(m_RX > m_MaxRX) m_MaxRX = m_RX;
+    		if(m_RY > m_MaxRY) m_MaxRY = m_RY;
+    		if(m_RZ > m_MaxRZ) m_MaxRZ = m_RZ;
+        	
+        	m_RXCurTV.setText(String.format("%.2f", m_RX));
+        	m_RXMinTV.setText(String.format("%.2f", m_MinRX));
+        	m_RXMaxTV.setText(String.format("%.2f", m_MaxRX));
+        	
+        	m_RYCurTV.setText(String.format("%.2f", m_RY));
+        	m_RYMinTV.setText(String.format("%.2f", m_MinRY));
+        	m_RYMaxTV.setText(String.format("%.2f", m_MaxRY));
+        	
+        	m_RZCurTV.setText(String.format("%.2f", m_RZ));
+        	m_RZMinTV.setText(String.format("%.2f", m_MinRZ));
+        	m_RZMaxTV.setText(String.format("%.2f", m_MaxRZ));
     	}
     }
 
@@ -142,115 +195,40 @@ public class MainActivity
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
     }
     
-    protected void updateA() {
-    	float curx, minx, maxx, smoothedx;
-    	float cury, miny, maxy, smoothedy;
-    	float curz, minz, maxz, smoothedz;
-    	
-    	curx = m_AX[m_CurA];
-    	cury = m_AY[m_CurA];
-    	curz = m_AZ[m_CurA];
-    	minx = Float.MAX_VALUE;
-    	miny = Float.MAX_VALUE;
-    	minz = Float.MAX_VALUE;
-    	maxx = Float.MIN_VALUE;
-    	maxy = Float.MIN_VALUE;
-    	maxz = Float.MIN_VALUE;
-    	for(int i = 0; i < m_SampleSize; i++) {
-    		if(m_AX[i] < minx) minx = m_AX[i];
-    		if(m_AY[i] < miny) miny = m_AY[i];
-    		if(m_AZ[i] < minz) minz = m_AZ[i];
-    		if(m_AX[i] > maxx) maxx = m_AX[i];
-    		if(m_AY[i] > maxy) maxy = m_AY[i];
-    		if(m_AZ[i] > maxz) maxz = m_AZ[i];    		
-    	}
-    	
-    	smoothedx = 0.0f;
-    	smoothedy = 0.0f;
-    	smoothedz = 0.0f;
-    	for(int i = 0; i < m_SmoothingSize; i++) {
-    		int pos = m_CurA - i;
-    		if(pos < 0) pos += m_SampleSize;
-    		smoothedx += m_AX[pos];
-    		smoothedy += m_AY[pos];
-    		smoothedz += m_AZ[pos];
-    	}
-    	
-    	smoothedx /= m_SmoothingSize;
-    	smoothedy /= m_SmoothingSize;
-    	smoothedz /= m_SmoothingSize;
-    	
-    	m_AXCurTV.setText(String.format("%.2f", curx));
-    	m_AXMinTV.setText(String.format("%.2f", minx));
-    	m_AXMaxTV.setText(String.format("%.2f", maxx));
-    	m_AXSmoothedTV.setText(String.format("%.2f", smoothedx));
-    	
-    	m_AYCurTV.setText(String.format("%.2f", cury));
-    	m_AYMinTV.setText(String.format("%.2f", miny));
-    	m_AYMaxTV.setText(String.format("%.2f", maxy));
-    	m_AYSmoothedTV.setText(String.format("%.2f", smoothedy));
-    	
-    	m_AZCurTV.setText(String.format("%.2f", curz));
-    	m_AZMinTV.setText(String.format("%.2f", minz));
-    	m_AZMaxTV.setText(String.format("%.2f", maxz));
-    	m_AZSmoothedTV.setText(String.format("%.2f", smoothedz));
-    	
-		m_CurA = (m_CurA + 1)  % m_SampleSize;
-    }
-    
-    protected void updateR() {
-    	float curx, minx, maxx, smoothedx;
-    	float cury, miny, maxy, smoothedy;
-    	float curz, minz, maxz, smoothedz;
-    	
-    	curx = m_RX[m_CurR];
-    	cury = m_RY[m_CurR];
-    	curz = m_RZ[m_CurR];
-    	minx = Float.MAX_VALUE;
-    	miny = Float.MAX_VALUE;
-    	minz = Float.MAX_VALUE;
-    	maxx = Float.MIN_VALUE;
-    	maxy = Float.MIN_VALUE;
-    	maxz = Float.MIN_VALUE;
-    	for(int i = 0; i < m_SampleSize; i++) {
-    		if(m_RX[i] < minx) minx = m_RX[i];
-    		if(m_RY[i] < miny) miny = m_RY[i];
-    		if(m_RZ[i] < minz) minz = m_RZ[i];
-    		if(m_RX[i] > maxx) maxx = m_RX[i];
-    		if(m_RY[i] > maxy) maxy = m_RY[i];
-    		if(m_RZ[i] > maxz) maxz = m_RZ[i];    		
-    	}
-    	
-    	smoothedx = 0.0f;
-    	smoothedy = 0.0f;
-    	smoothedz = 0.0f;
-    	for(int i = 0; i < m_SmoothingSize; i++) {
-    		int pos = m_CurR - i;
-    		if(pos < 0) pos += m_SampleSize;
-    		smoothedx += m_RX[pos];
-    		smoothedy += m_RY[pos];
-    		smoothedz += m_RZ[pos];
-    	}
-    	
-    	smoothedx /= m_SmoothingSize;
-    	smoothedy /= m_SmoothingSize;
-    	smoothedz /= m_SmoothingSize;
-    	
-    	m_RXCurTV.setText(String.format("%.2f", curx));
-    	m_RXMinTV.setText(String.format("%.2f", minx));
-    	m_RXMaxTV.setText(String.format("%.2f", maxx));
-    	m_RXSmoothedTV.setText(String.format("%.2f", smoothedx));
-    	
-    	m_RYCurTV.setText(String.format("%.2f", cury));
-    	m_RYMinTV.setText(String.format("%.2f", miny));
-    	m_RYMaxTV.setText(String.format("%.2f", maxy));
-    	m_RYSmoothedTV.setText(String.format("%.2f", smoothedy));
-    	
-    	m_RZCurTV.setText(String.format("%.2f", curz));
-    	m_RZMinTV.setText(String.format("%.2f", minz));
-    	m_RZMaxTV.setText(String.format("%.2f", maxz));
-    	m_RZSmoothedTV.setText(String.format("%.2f", smoothedz));
+    private class SendTask extends AsyncTask {
 
-		m_CurR = (m_CurR + 1) % m_SampleSize;
+        @Override
+		protected Object doInBackground(Object... arg0) {
+
+        	Socket socket = null;
+        	DataOutputStream socketWriter = null;
+        	
+	        while(! this.isCancelled()) {
+	        	
+	        	try {
+		        	socket = new Socket("tessy.umcs.maine.edu", 16661);
+		        	socketWriter = new DataOutputStream(socket.getOutputStream());
+		        	
+	        		String msg = String.format("%f,%f,%f,%f,%f,%f",
+	                                           m_AX, m_AY, m_AZ, m_RX, m_RY, m_RZ);
+	        		byte[] b = msg.getBytes("US-ASCII");
+	        		
+	    			socketWriter.writeInt(b.length);
+	    			socketWriter.write(b);
+	    			socketWriter.flush();
+	    			
+	    			socketWriter.close();
+	    			socketWriter = null;
+	    			socket.close();
+	    			socket = null;
+	    			
+	        	} catch(Exception ex) {
+	        		break;
+	        	}
+	        }
+
+	        return null;
+		}
+    	
     }
 }
